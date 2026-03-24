@@ -29,6 +29,34 @@ class VirusTotalKey(Model):
         table = "virustotal_keys"
 
 
+class OpenRouterKey(Model):
+    id = fields.IntField(pk=True)  
+    api_key = fields.CharField(max_length=255)
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+    
+    class Meta:
+        table = "openrouter_keys"
+
+
+class OpenRouterModel(Model):
+    id = fields.IntField(pk=True, generated=True)
+    user_id = fields.IntField()
+    model_name = fields.CharField(max_length=100)  
+    model_id = fields.CharField(max_length=100)    
+    is_default = fields.BooleanField(default=False)
+    supports_search = fields.BooleanField(default=False)
+    supports_deep_thought = fields.BooleanField(default=False)
+    supports_files = fields.BooleanField(default=False)
+    supports_vision = fields.BooleanField(default=False)
+    supports_function_calling = fields.BooleanField(default=False)
+    context_length = fields.IntField(default=4096)  
+    created_at = fields.DatetimeField(auto_now_add=True)
+    
+    class Meta:
+        table = "openrouter_models"
+
+
 class Personal(Model):
     first_name = fields.CharField(max_length=255)
     last_name = fields.CharField(max_length=255)
