@@ -57,6 +57,19 @@ class OpenRouterModel(Model):
         table = "openrouter_models"
 
 
+class CookieKey(Model):
+    id = fields.IntField(pk=True)
+    filename = fields.CharField(max_length=255, unique=True)
+    failures = fields.IntField(default=0)
+    last_fail_time = fields.DatetimeField(null=True)
+    blocked_until = fields.DatetimeField(null=True)
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta:
+        table = "cookie_keys"
+
+
 class Personal(Model):
     first_name = fields.CharField(max_length=255)
     last_name = fields.CharField(max_length=255)

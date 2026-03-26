@@ -308,12 +308,15 @@ wiki_no_results: Nenhum resultado encontrado para {query}.
 
 #youtube.py
 ytdl_missing_argument: "Está faltando uma URL ou um texto para pesquisa."
+ytdl_not_found: "❌ Nenhum vídeo encontrado"
 ytdl_search_error: "❌ Erro ao buscar: {error}"
 ytdl_audio_button: "💿 Áudio"
 ytdl_video_button: "📹 Vídeo"
 ytdl_video_error: "Erro nos dados."
 ytdl_file_too_big: "O arquivo é muito grande. Máximo suportado: {size}"
 ytdl_downloading: "⏳ Baixando…"
+ytdl_progress_downloading: "⬇️ Baixando: {bar} {percent:.1f}%\n📊 {current} / {total}\n⚡ {speed}/s"
 ytdl_send_error: "❌ Ocorreu um erro ao enviar o arquivo: {e}"
 ytdl_sending: "📤 Enviando…"
 ytdl_sent: "✅ Enviado!"
+ytdl_timeout: "⏳ Os cookies disponíveis falharam. Tente novamente em algumas horas."
