@@ -1,6 +1,8 @@
 # Ignora versionamento git
 .git
 .gitignore
+.github
+.forgejo
 
 # Ignora ambientes virtuais locais (o Docker terá o próprio)
 venv
