@@ -75,6 +75,7 @@ canceled: Cancelado.
 
 #ip.py
 ip_search: "🔎 <code>Consultando...</code>"
+ip_found: "✅ <code>Domínio encontrado</code>"
 ip_err_format: "Formato inválido"
 ip_err_search: "❌ Erro ao obter dados da API."
 ip_err_nf: "Erro ao obter IP"
