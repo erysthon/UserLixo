@@ -210,6 +210,7 @@ ping_status_good: "✅ Boa"
 ping_status_regular: "⚠️ Regular (latência alta)"
 ping_status_bad: "⚠️ Ruim (perda moderada)"
 ping_status_terrible: "❌ Péssima (alta perda)"
+ping_dns_error: "❌ Host não encontrado: `{host}`\nErro: {error}"
 ping_fail: |
   **❌ Falha ao pingar**
   Host: `{host}`

@@ -14,10 +14,11 @@ async def python_ping(host, count=5, timeout=3):
     """
     Ping usando apenas Python (socket) na porta 80
     """
-    port = 80 
+    port = 80
     results = []
     successful = 0
-    
+
+    # Resolve o nome do host para obter o IP
     try:
         info = await asyncio.get_event_loop().getaddrinfo(
             host, port, family=socket.AF_INET, type=socket.SOCK_STREAM
@@ -27,42 +28,45 @@ async def python_ping(host, count=5, timeout=3):
         return {
             'success': False,
             'host': host,
-            'error': str(e)
+            'error': str(e),
+            'dns_error': True   # indica erro de resolução
         }
-    
+
     for i in range(count):
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(timeout)
-            
+
             start_time = time.time()
-            
             await asyncio.wait_for(
                 asyncio.get_event_loop().sock_connect(sock, (ip, port)),
                 timeout=timeout
             )
-            
             end_time = time.time()
             latency_ms = (end_time - start_time) * 1000
             results.append(latency_ms)
             successful += 1
             sock.close()
-            
+
             if i < count - 1:
                 await asyncio.sleep(0.5)
-                
-        except (socket.timeout, asyncio.TimeoutError, ConnectionRefusedError):
-            if 'start_time' in locals() and isinstance(e, ConnectionRefusedError):
-                end_time = time.time()
-                results.append((end_time - start_time) * 1000)
-                successful += 1
-            if 'sock' in locals(): sock.close()
-        except Exception:
-            if 'sock' in locals(): sock.close()
-    
+
+        except (socket.timeout, asyncio.TimeoutError, ConnectionRefusedError) as e:
+            # Falha na conexão: não adiciona latência e não conta como sucesso
+            if 'sock' in locals():
+                sock.close()
+        except Exception as e:
+            if 'sock' in locals():
+                sock.close()
+
     if successful == 0:
-        return {'success': False, 'host': host, 'ip': ip, 'error': 'No response'}
-    
+        return {
+            'success': False,
+            'host': host,
+            'ip': ip,
+            'error': 'No response'
+        }
+
     loss_percentage = ((count - successful) / count) * 100
     return {
         'success': True,
@@ -89,23 +93,22 @@ async def ping_command(c: Client, m: Message, t):
         latency = (t2 - t1).microseconds / 1000
         await msg.edit(t("ping_bot_latency").format(latency=f"{latency:.2f}"))
         return
-    
+
     host = m.command[1]
-    
-    # Validação do host
+
+    # Validação simples do host
     if not re.match(r'^[a-zA-Z0-9.-]+$', host):
         await m.edit(t("ping_invalid_host").format(host=host))
         return
-    
+
     msg = await m.edit(t("ping_start").format(host=host))
-    
+
     try:
         result = await python_ping(host)
-        
+
         if result['success']:
             stats = result['stats']
-            
-            # Cabeçalho da resposta
+
             response = t("ping_response").format(
                 host=host,
                 ip=result['ip'],
@@ -113,13 +116,12 @@ async def ping_command(c: Client, m: Message, t):
                 sent=stats['sent'],
                 loss=f"{stats['loss']:.1f}"
             )
-            
-            # Linhas de latência
+
             response += t("ping_min").format(min=f"{stats['min']:.1f}") + "\n"
             response += t("ping_avg").format(avg=f"{stats['avg']:.1f}") + "\n"
             response += t("ping_max").format(max=f"{stats['max']:.1f}")
-            
-            # Lógica qualitativa com tradução
+
+            # Avaliação qualitativa
             if stats['loss'] > 70:
                 status_text = t("ping_status_terrible")
             elif stats['loss'] > 30:
@@ -130,17 +132,30 @@ async def ping_command(c: Client, m: Message, t):
                 status_text = t("ping_status_good")
             else:
                 status_text = t("ping_status_excellent")
-                
+
             response += t("ping_status").format(status=status_text)
-            
+
         else:
-            response = t("ping_fail").format(
-                host=host,
-                ip=result.get('ip', 'N/A'),
-                error=result.get('error', 'N/A')
-            )
-        
+            # Verifica se é erro de DNS para mensagem mais amigável
+            error_msg = result.get('error', 'N/A')
+            if result.get('dns_error') or "Name or service not known" in error_msg or "nodename nor servname" in error_msg:
+                # Se existir a string de tradução, use-a; caso contrário, use a padrão
+                try:
+                    response = t("ping_dns_error").format(host=host, error=error_msg)
+                except KeyError:
+                    response = t("ping_fail").format(
+                        host=host,
+                        ip=result.get('ip', 'N/A'),
+                        error=error_msg
+                    )
+            else:
+                response = t("ping_fail").format(
+                    host=host,
+                    ip=result.get('ip', 'N/A'),
+                    error=error_msg
+                )
+
         await msg.edit(response)
-        
+
     except Exception as e:
         await msg.edit(t("ping_unexpected_error").format(error=str(e)[:150]))
