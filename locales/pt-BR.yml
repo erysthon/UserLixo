@@ -131,7 +131,7 @@ minutes: "**{minutes}** minutos\n"
 seconds: "**{seconds}** segundos\n"
 deleted: Esse usuário não existe mais.
 
-# OpenRouter AI
+#openrouter.py
 openrouter_no_api_key: "❌ Você não configurou uma chave API do OpenRouter."
 openrouter_configure: "⚙️ Configurar OpenRouter"
 openrouter_no_models: "❌ Você não tem modelos configurados. Adicione um modelo primeiro."
@@ -237,7 +237,7 @@ speedtest_result: |
   **🔌 ISP:** `{isp}`
   **⭐ Avaliação ISP:** `{isp_rating}`
 speedtest_timeout: "⏰ Timeout: O teste demorou mais de 3 minutos. Sua conexão pode estar muito lenta."
-speedtest_no_internet: "❌ Não foi possível conectar ao speedtest.net. Verifique sua conexão com a internet."
+speedtest_no_internet: "❌ Não foi possível conectar ao speedtest.net."
 speedtest_no_servers: "❌ Nenhum servidor de teste compatível encontrado."
 speedtest_error: "❌ Erro durante o teste: `{error}`"
 speedtest_image_fallback: "Não foi possível enviar a imagem, mostrando apenas texto"
