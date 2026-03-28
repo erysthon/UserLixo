@@ -3,43 +3,23 @@ LANGUAGE_CODE: pt-BR
 FLAG: '🇧🇷'
 
 #ai.py
-ai_bing_searching: "Procurando \"{text}\" no Copilot…"
-ai_no_text: "Você precisa enviar um texto para pesquisar ou fazer imagem."
-ai_making_image: "Fazendo uma imagem com \"{text}\"…"
-ai_bard_searching: "Procurando \"{text}\" no Gemini…"
-bing_config_button: "Configurações do Bing"
-bing_settings: "Configurações do Copilot"
-ai_mode: "alterar estilo Copilot"
-ai_mode_choose: "Escolha uma das opções:"
-ai_mode_creative: "Criativo"
-ai_mode_balanced: "Balanceado"
-ai_mode_precise: "Precisa"
-ai_mode_changed: "Estilo Copilot alterado para o estilo {style}."
-ai_login: "Entrar no Copilot"
-ai_login_text: "Por favor, pressione o botão abaixo para entrar. Depois de concluir
-  o login, envie a URL final aqui. Por exemplo: 'https://login. ive.com/oauth20_desktop.srf?code=xxx&state=yyy&lc=zzz'.
-  O importante é obter este 'code' para logar"
-ai_login_success: "Login efetuado!"
-
-#ai.py?
-chose_tone: 'Escolha o tom do texto a ser gerado:'
-ai_making_text: "<blockquote> {text} </blockquote>\nGerando texto com o tom {tone}
-  …"
 ai_error: "Ocorreu um erro ao gerar:\n<blockquote>{error}</blockquote>"
-tone_config: Configurações de tom
-professional: Profissional
-casual: Casual
-polite: Educado
-funny: Engraçado
-social+post: Postagem Social
-witty: Inteligente
-quest: Pergunta sobre o uso
-bard_config_button: Configurações da GeminiAI
-bard_settings: Configurações da GeminiAI
-bard_ai_mode: alterar o estilo GeminiAI
-ai_mode_telegraph: Enviar o resultado como Telegraph
-ai_mode_message: Enviar o resultado como mensagem
-ai_mode_voice: Enviar resultado como mensagem de voz e Telegraph
+ai_no_text: "Você precisa enviar um texto junto com o comando ou responder a uma mensagem."
+ai_api_error: "Erro na API: {error}"
+ai_generating_images: "Fazendo {amount} imagens com descrição: {prompt}\nNegativa: {negative_prompt}\nTamanho: {width}x{height}"
+ai_image_generation_failed: "Falha ao gerar a imagem"
+ai_image_caption: "Prompt: {prompt}\nNegative Prompt: {negative_prompt}\nRatio: {width}x{height}"
+ai_wikipedia_fetching: "Obtendo conteúdo da Wikipedia para o título: <code>{title} ({language})</code>"
+ai_wikipedia_searching: "Pesquisando na Wikipedia por: <code>{query} ({language})</code>"
+ai_wikipedia_ambiguous: "Erro ao obter a página da Wikipedia, título ambíguo. Tente um dos seguintes títulos:\n\n{pages}"
+ai_wikipedia_no_results: "Nenhum resultado encontrado para a pesquisa: <code>{query}</code>"
+ai_wikipedia_results_header: "Resultados encontrados para a pesquisa: </code>{query}</code>"
+ai_wikipedia_error: "Erro ao pesquisar na Wikipedia: {error}"
+ai_wikipedia_read_more: "<a href='{url}'>Leia mais na Wikipedia</a>"
+ai_web_searching: "Pesquisando na web por: <code>{query}</code>"
+ai_web_no_results: "Nenhum resultado encontrado para a consulta: <code>{query}</code>"
+ai_web_results_header: "Resultados da pesquisa para '{query}':"
+ai_web_error: "Erro ao pesquisar na web: {error}"
 
 #backup.py
 initiating_backup: Iniciando backup…
@@ -48,7 +28,7 @@ uploading_backup: Enviando backup…
 backup_completed: Backup concluído em {time} segundos
 
 #cmd.py
-cmd_usage: "❌ Uso: .cmd [-l|--local] <comando>"
+cmd_usage: "❌ Uso: .cmd [-l] <comando>"
 cmd_no_output: Comando executado com sucesso.
 cmd_docker_connection_error: "🚨 Erro ao conectar ao daemon Docker do Host: {error}"
 cmd_docker_api_error: "❌ Erro na API Docker (Host): {error}"
@@ -78,6 +58,7 @@ fake_done: Agora eu sou o {mention}!
 #geral
 back: '« Voltar'
 canceled: Cancelado.
+wait: "wait"
 
 #ip.py
 ip_search: "🔎 <code>Consultando...</code>"
