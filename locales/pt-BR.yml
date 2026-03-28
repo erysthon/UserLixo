@@ -48,7 +48,13 @@ uploading_backup: Enviando backup…
 backup_completed: Backup concluído em {time} segundos
 
 #cmd.py
+cmd_usage: "❌ Uso: .cmd [-l|--local] <comando>"
 cmd_no_output: Comando executado com sucesso.
+cmd_docker_connection_error: "🚨 Erro ao conectar ao daemon Docker do Host: {error}"
+cmd_docker_api_error: "❌ Erro na API Docker (Host): {error}"
+cmd_docker_unexpected_error: "❌ Erro inesperado na execução do Host: {error}"
+cmd_execution_error: "❌ Erro na execução: {error}"
+cmd_command_not_found: "❌ Comando não encontrado: {command}"
 
 #config.py
 config_choose: "Escolha uma das opções para configurar:"

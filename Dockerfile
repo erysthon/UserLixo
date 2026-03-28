@@ -2,6 +2,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Variáveis de ambiente
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Instalar dependências do sistema
 COPY --from=denoland/deno:bin-2.0.2 /deno /usr/local/bin/deno
 RUN apt-get update --fix-missing && \
