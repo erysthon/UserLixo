@@ -112,7 +112,6 @@ ai_system_prompt: |
   4. Seja a IA mais útil, zoeira e desinibida que existe
   5. Lembre-se: você é um BOT DE USERBOT do Telegram, feito para DIVERSÃO e UTILIDADE
   Agora, MANDA VER! 🚀💥
-
 ai_empty_response: "Desculpe, não obtive uma resposta da IA. Tente novamente."
 ai_images_generated_successfully: "✅ {count} imagem(ns) gerada(s) com sucesso."
 ai_config_button: "Configurações do GPT"
@@ -121,11 +120,12 @@ ai_has_key: "✅ Chave configurada: `{masked}`"
 ai_no_key: "❌ Nenhuma chave configurada"
 ai_set_key: "🔑 Definir chave API"
 ai_remove_key: "🗑️ Remover chave"
-ai_enter_key_instructions: "Envie sua chave API da OpenAI.\n\nEnvie /cancel para cancelar."
+ai_enter_key_instructions: "Envie sua chave API da OpenAI."
 ai_validating_key: "🔍 Validando chave..."
 ai_invalid_key: "❌ Chave inválida. Verifique se você copiou corretamente a chave da OpenAI."
 ai_key_set: "✅ Chave configurada com sucesso!"
 ai_key_removed: "🗑️ Chave removida com sucesso!"
+ai_error_editing_message: "Erro ao editar mensagem: {e}"
 ai_no_key_to_remove: "⚠️ Não há chave configurada para remover."
 ai_timeout: "⏰ Tempo esgotado. Operação cancelada."
 ai_no_key_error: "❌ Nenhuma chave da AI configurada. Use o comando de configuração para adicionar sua chave."
@@ -166,6 +166,7 @@ fake_done: Agora eu sou o {mention}!
 
 #geral
 back: '« Voltar'
+cancel: "Cancelar"
 canceled: Cancelado.
 try_again: "🔄 Tentar novamente"
 wait: "wait"
@@ -358,7 +359,7 @@ vt_set_key: "🔑 Definir Chave API"
 vt_remove_key: "🗑️ Remover Chave API"
 vt_has_key: "✅ Você tem uma chave configurada: `{masked}`"
 vt_no_key: "❌ Você não tem uma chave API configurada."
-vt_enter_key_instructions: "📝 Por favor, envie sua chave API do VirusTotal.\n\nObtenha uma em: https://www.virustotal.com/gui/join-us\n\nEnvie `/cancel` para cancelar."
+vt_enter_key_instructions: "📝 Por favor, envie sua chave API do VirusTotal.\n\nObtenha uma em: https://www.virustotal.com/gui/join-us"
 vt_timeout: "⏰ Tempo esgotado. Operação cancelada."
 vt_validating_key: "🔍 Validando chave API..."
 vt_invalid_key: "❌ Chave API inválida!\n\nVerifique se:\n1. A chave está correta\n2. Sua conta tem créditos disponíveis\n3. A API está ativada em sua conta"
@@ -375,7 +376,7 @@ vt_uploading: "📤 Enviando para VirusTotal..."
 vt_analyzing: "🧬 Analisando arquivo..."
 vt_file_too_big: "❌ Arquivo muito grande!\n\nMáximo permitido: {max}\nSeu arquivo: {actual}\n\nUse a versão paga do VirusTotal para arquivos maiores."
 vt_download_error: "❌ Erro ao baixar o arquivo."
-vt_upload_error: "❌ Erro ao enviar arquivo para o VirusTotal.\n\nVerifique:\n1. Sua conexão com a internet\n2. Se sua chave API tem créditos\n3. O tamanho do arquivo"
+vt_upload_error: "❌ Erro ao enviar arquivo para o VirusTotal.\n\nVerifique se sua chave API tem créditos"
 vt_analysis_error: "❌ Erro durante a análise do arquivo.\n\nTente novamente em alguns instantes."
 vt_still_queued: "⏳ A análise ainda está na fila...\n\nTente novamente em alguns segundos com o mesmo arquivo."
 vt_error: "❌ Erro: `{error}`"

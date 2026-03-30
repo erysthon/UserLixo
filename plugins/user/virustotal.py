@@ -393,66 +393,89 @@ async def config_virustotal(c: Client, m: CallbackQuery, t):
 @bot.on_callback_query(filters.regex(r"config_plugin_virustotal_key"))
 @use_lang()
 async def config_virustotal_key(c: Client, cq: CallbackQuery, t):
-    """Configurar chave API do VirusTotal."""
     user_id = cq.from_user.id
-    
-    await cq.edit_message_text(
-        t("vt_enter_key_instructions"),
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton(text=t("cancel"), callback_data="config_plugin_virustotal")]
-        ])
-    )
-    
-    # Aguardar resposta do usuário
+
+    try:
+        await cq.edit_message_text(
+            t("vt_enter_key_instructions"),
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(text=t("cancel"), callback_data="config_plugin_virustotal")]
+            ])
+        )
+    except Exception:
+        # Mensagem original pode ter sido deletada, apenas encerra
+        return
+
     try:
         key_msg = await cq.message.chat.listen(
             filters.text & filters.user(user_id),
             timeout=60
         )
     except ListenerTimeout:
-        await cq.edit_message_text(
-            t("vt_timeout"),
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(text=t("back"), callback_data="config_plugin_virustotal")]
-            ])
-        )
+        try:
+            await cq.edit_message_text(
+                t("vt_timeout"),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(text=t("back"), callback_data="config_plugin_virustotal")]
+                ])
+            )
+        except:
+            pass
         return
-    
+
     new_key = key_msg.text.strip()
-    
-    if new_key.lower() == "/cancel":
+
+    # Cancela se for comando (/, .) ou /cancel
+    if new_key.startswith(("/", ".")) or new_key.lower() == "/cancel":
+        try:
+            await cq.edit_message_text(
+                t("canceled"),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(text=t("back"), callback_data="config_plugin_virustotal")]
+                ])
+            )
+        except:
+            pass
+        return
+
+    # Validar chave
+    try:
+        await cq.edit_message_text(t("vt_validating_key"))
+    except:
+        pass
+
+    test_headers = {"x-apikey": new_key}
+    try:
+        test_resp = await http.get(f"{VT_API_BASE}/users/me", headers=test_headers, timeout=30)
+        is_valid = test_resp.status_code == 200
+    except Exception:
+        is_valid = False
+
+    if not is_valid:
+        try:
+            await cq.edit_message_text(
+                t("vt_invalid_key"),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(text=t("try_again"), callback_data="config_plugin_virustotal_key")]
+                ])
+            )
+        except:
+            pass
+        return  # não apaga a mensagem do usuário
+
+    # Chave válida: apaga a mensagem do usuário e salva
+    await set_vt_key(user_id, new_key)
+
+    try:
         await cq.edit_message_text(
-            t("canceled"),
+            t("vt_key_set"),
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton(text=t("back"), callback_data="config_plugin_virustotal")]
             ])
         )
-        return
-    
-    # Validar chave (fazendo uma requisição de teste)
-    await cq.edit_message_text(t("vt_validating_key"))
-    
-    test_headers = {"x-apikey": new_key}
-    test_resp = await http.get(f"{VT_API_BASE}/users/me", headers=test_headers, timeout=30)
-    
-    if test_resp.status_code != 200:
-        await cq.edit_message_text(
-            t("vt_invalid_key"),
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(text=t("try_again"), callback_data="config_plugin_virustotal_key")]
-            ])
-        )
-        return
-    
-    # Salvar chave
-    await set_vt_key(user_id, new_key)
-    
-    await cq.edit_message_text(
-        t("vt_key_set"),
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton(text=t("back"), callback_data="config_plugin_virustotal")]
-        ])
-    )
+        await key_msg.delete()
+    except:
+        pass
 
 @bot.on_callback_query(filters.regex(r"config_plugin_virustotal_remove"))
 @use_lang()

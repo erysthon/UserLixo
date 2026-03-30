@@ -660,65 +660,88 @@ async def config_ai(c: Client, cq: CallbackQuery, t):
 @bot.on_callback_query(filters.regex(r"config_plugin_ai_key"))
 @use_lang()
 async def config_ai_key(c: Client, cq: CallbackQuery, t):
-    """Configurar chave API da AI."""
     user_id = cq.from_user.id
-    
-    await cq.edit_message_text(
-        t("ai_enter_key_instructions"),
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton(text=t("cancel"), callback_data="config_plugin_ai")]
-        ])
-    )
-    
-    # Aguardar resposta do usuário
+
+    # Tenta editar a mensagem com instruções
+    try:
+        await cq.edit_message_text(
+            t("ai_enter_key_instructions"),
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(text=t("cancel"), callback_data="config_plugin_ai")]
+            ])
+        )
+    except Exception as e:
+        # Se a mensagem original não existir, apenas encerra
+        print(t("ai_error_editing_message").format(error=e))
+        return
+
+    # Aguarda a mensagem do usuário
     try:
         key_msg = await cq.message.chat.listen(
             filters.text & filters.user(user_id),
             timeout=60
         )
     except ListenerTimeout:
-        await cq.edit_message_text(
-            t("ai_timeout"),
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(text=t("back"), callback_data="config_plugin_ai")]
-            ])
-        )
+        try:
+            await cq.edit_message_text(
+                t("ai_timeout"),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(text=t("back"), callback_data="config_plugin_ai")]
+                ])
+            )
+        except:
+            pass
         return
-    
+
     new_key = key_msg.text.strip()
-    
-    if new_key.lower() == "/cancel":
+
+    # Cancela se a mensagem começar com / ou . (comandos)
+    if new_key.startswith(("/", ".")):
+        try:
+            await cq.edit_message_text(
+                t("canceled"),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(text=t("back"), callback_data="config_plugin_ai")]
+                ])
+            )
+        except:
+            pass
+        return
+
+    # Mensagem de validação
+    try:
+        await cq.edit_message_text(t("ai_validating_key"))
+    except:
+        pass
+
+    is_valid = await validate_ai_key(new_key)
+
+    if not is_valid:
+        try:
+            await cq.edit_message_text(
+                t("ai_invalid_key"),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(text=t("try_again"), callback_data="config_plugin_ai_key")]
+                ])
+            )
+        except:
+            pass
+        # Não apaga a mensagem do usuário (para que possa tentar novamente)
+        return
+
+    # Chave válida: apaga a mensagem do usuário e salva
+    await set_ai_key(user_id, new_key)
+
+    try:
         await cq.edit_message_text(
-            t("canceled"),
+            t("ai_key_set"),
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton(text=t("back"), callback_data="config_plugin_ai")]
             ])
         )
-        return
-    
-    # Validar chave
-    await cq.edit_message_text(t("ai_validating_key"))
-    
-    is_valid = await validate_ai_key(new_key)
-    
-    if not is_valid:
-        await cq.edit_message_text(
-            t("ai_invalid_key"),
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(text=t("try_again"), callback_data="config_plugin_ai_key")]
-            ])
-        )
-        return
-    
-    # Salvar chave
-    await set_ai_key(user_id, new_key)
-    
-    await cq.edit_message_text(
-        t("ai_key_set"),
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton(text=t("back"), callback_data="config_plugin_ai")]
-        ])
-    )
+        await key_msg.delete()
+    except:
+        pass
 
 @bot.on_callback_query(filters.regex(r"config_plugin_ai_remove"))
 @use_lang()
