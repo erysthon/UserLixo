@@ -3,7 +3,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Variáveis de ambiente
-ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONPYCACHEPREFIX=/root/.cache/pycache
 ENV PYTHONUNBUFFERED=1
 ENV DEBIAN_FRONTEND=noninteractive
 

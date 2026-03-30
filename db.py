@@ -19,7 +19,7 @@ class Config(Model):
     valuej = fields.JSONField(default={})
 
 
-class VirusTotalKey(Model):
+class VirusTotalKey(Model): #virustotal keys management
     id = fields.IntField(pk=True)  
     api_key = fields.CharField(max_length=64)  
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -29,7 +29,7 @@ class VirusTotalKey(Model):
         table = "virustotal_keys"
 
 
-class OpenRouterKey(Model):
+class OpenRouterKey(Model): #openrouter keys management
     id = fields.IntField(pk=True)  
     api_key = fields.CharField(max_length=255)
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -39,7 +39,7 @@ class OpenRouterKey(Model):
         table = "openrouter_keys"
 
 
-class OpenRouterModel(Model):
+class OpenRouterModel(Model): #openrouter models management
     id = fields.IntField(pk=True, generated=True)
     user_id = fields.IntField()
     model_name = fields.CharField(max_length=100)  
@@ -57,7 +57,7 @@ class OpenRouterModel(Model):
         table = "openrouter_models"
 
 
-class CookieKey(Model):
+class CookieKey(Model): #ytdl cookie management
     id = fields.IntField(pk=True)
     filename = fields.CharField(max_length=255, unique=True)
     failures = fields.IntField(default=0)
@@ -68,6 +68,16 @@ class CookieKey(Model):
 
     class Meta:
         table = "cookie_keys"
+
+
+class AIApiKey(Model): #ai key management
+    id = fields.IntField(pk=True)
+    api_key = fields.CharField(max_length=256)  
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+    
+    class Meta:
+        table = "ai_api_keys"
 
 
 class Personal(Model):
