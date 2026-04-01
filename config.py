@@ -1,10 +1,13 @@
 import os
 from hydrogram import Client
+from pathlib import Path
 
 plugins = []
 
-# Sessions directory (absolute path for Docker)
-SESSIONS_DIR = "/app/data/sessions"
+# Sessions directory 
+BASE_DIR = Path(__file__).parent
+SESSIONS_DIR = Path(os.environ.get("SESSIONS_DIR", BASE_DIR / "data" / "sessions"))
+SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
 
 try:
     # API_ID is an integer
