@@ -17,7 +17,7 @@ except RuntimeError:
     langs = None
 
 
-@Client.on_message(filters.command("tts", prefixes=".") & filters.me)
+@Client.on_message(filters.command("tts", prefixes=".") & filters.sudoers)
 async def tts(c: Client, m: Message):
     global langs
     if not langs:

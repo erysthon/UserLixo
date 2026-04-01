@@ -190,6 +190,7 @@ ip_err_bogon_ip: "O endereço <code>{ip}</code> é um IP <i>bogon</i> (reservado
 ip_select_ip: "O domínio <b>{domain}</b> possui vários IPs. Selecione um abaixo:"
 
 #kibe.py
+kibe_no_media: "Nenhuma mídia encontrada."
 kibe_choose: Por favor, escolha o formato do kibe
 sticker: Sticker
 emoji: Emoji

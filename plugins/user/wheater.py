@@ -35,7 +35,7 @@ async def weather_cmd(c: Client, m: Message, t):
         return await m.edit(t("weather_usage"))
 
     location_query = " ".join(m.command[1:])
-    await m.edit(t("weather_search").format(location_query=location_query))
+    wait_msg = await m.edit(t("weather_search").format(location_query=location_query))
 
     try:
         # 1. Busca as Coordenadas (Geocoding)
@@ -50,7 +50,7 @@ async def weather_cmd(c: Client, m: Message, t):
         loc_data = r_geo.json()
 
         if not loc_data.get("location") or not loc_data["location"].get("latitude"):
-            return await m.edit(t("location_not_found").format(location=location_query))
+            return await wait_msg.edit(t("location_not_found").format(location=location_query))
 
         # Pega o primeiro resultado da busca
         lat = loc_data["location"]["latitude"][0]
@@ -71,7 +71,7 @@ async def weather_cmd(c: Client, m: Message, t):
 
         obs = res_json.get("v3-wx-observations-current")
         if not obs:
-            return await m.edit(t("weather_err_data"))
+            return await wait_msg.edit(t("weather_err_data"))
 
         # 3. Formata a Resposta Final
         emoji = get_emoji(obs.get("iconCode"))
@@ -86,8 +86,8 @@ async def weather_cmd(c: Client, m: Message, t):
             overview=f"{emoji} {phrase}"
         )
 
-        await m.edit(text)
+        await wait_msg.edit(text)
 
     except Exception as e:
         # Log de erro básico para não travar o userbot
-        await m.edit(t("ip_err_search")) 
+        await wait_msg.edit(t("ip_err_search"))

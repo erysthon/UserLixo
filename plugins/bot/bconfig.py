@@ -13,6 +13,9 @@ from db import Config, Sudoer
 from locales import get_locale_string, langdict, use_lang
 
 
+import os
+from zoneinfo import ZoneInfo
+
 @Client.on_message(filters.command("config") & filters.sudoers)
 @Client.on_callback_query(filters.regex(r"\bconfig\b") & filters.sudoers)
 @use_lang()
@@ -107,11 +110,17 @@ async def config_sudoers(c: Client, cq: CallbackQuery, t):
             username = str(uid)
         sudoers_data.append((uid, username, added_at))
 
-    sudoers_data.sort(key=lambda x: x[2] or 0, reverse=True)
+    sudoers_data.sort(key=lambda x: x[2] or 0)
 
     lines = [t('sudoers_list_title')]
     for idx, (uid, username, added_at) in enumerate(sudoers_data, start=1):
-        date_str = added_at.strftime("%d/%m/%y") if added_at else "??/??/??"
+        if added_at:
+           tz_str = os.environ.get('TZ', 'UTC')
+           local_tz = ZoneInfo(tz_str)
+           added_at_local = added_at.astimezone(local_tz)
+           date_str = added_at_local.strftime("%d/%m/%y")
+        else:
+           date_str = "??/??/??"
         lines.append(t('sudoers_entry').format(index=idx, username=username, date=date_str))
     lines.append(f"\n{t('sudoers_host_label').format(username=host_username)}")
     text = "\n".join(lines)
