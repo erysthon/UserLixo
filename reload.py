@@ -27,7 +27,7 @@ def remove_keyboard(self, message_id=None, *args, **kwargs):
 async def edit_text(self, text: str, reply_markup=None, *args, **kwargs):
     if isinstance(reply_markup, list):
         reply_markup = ikb(reply_markup)
-    if self._client.me.id == self.from_user.id:
+    if self.outgoing:
         return await self._client.edit_message_text(
             self.chat.id, self.id, text, reply_markup=reply_markup, **kwargs
         )

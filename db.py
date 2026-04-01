@@ -19,6 +19,14 @@ class Config(Model):
     valuej = fields.JSONField(default={})
 
 
+class Sudoer(Model): #sudoers users management
+    user_id = fields.IntField(pk=True)  
+    added_at = fields.DatetimeField(auto_now_add=True)  
+
+    class Meta:
+        table = "sudoers"
+
+
 class VirusTotalKey(Model): #virustotal keys management
     id = fields.IntField(pk=True)  
     api_key = fields.CharField(max_length=64)  

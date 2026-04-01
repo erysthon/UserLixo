@@ -168,8 +168,12 @@ fake_done: Agora eu sou o {mention}!
 back: '« Voltar'
 cancel: "Cancelar"
 canceled: Cancelado.
+next: "Próximo ➡️"
+prev: "⬅️ Anterior"
 try_again: "🔄 Tentar novamente"
 wait: "wait"
+yes: "✅ Sim"
+no: "❌ Não"
 
 #ip.py
 ip_search: "🔎 <code>Consultando...</code>"
@@ -341,6 +345,26 @@ speedtest_no_servers: "❌ Nenhum servidor de teste compatível encontrado."
 speedtest_error: "❌ Erro durante o teste: `{error}`"
 speedtest_image_fallback: "Não foi possível enviar a imagem, mostrando apenas texto"
 speedtest_invalid_arg: "❌ Argumento inválido. Use:\n`.speedtest` - Imagem\n`.speedtest -t` - Apenas texto\n`.speedtest -f` - Arquivo (documento)"
+
+#sudoers
+sudoers_manage: "Gerenciar Sudoers"
+sudoers_list_title: "Usuários sudoers ativos:"
+sudoers_entry: "{index}. @{username}\nAdicionado em {date}"
+sudoers_host_label: "Host: @{username}"
+sudoers_no_sudoers: "Nenhum usuário sudoer definido."
+sudoers_add_button: "👤 Definir novo Sudoer"
+sudoers_remove_button: "🗑️ Remover Sudoer"
+sudoers_add_instructions: "Envie o ID ou @username do novo sudoer:"
+sudoers_add_timeout: "⏰ Tempo esgotado. Operação cancelada."
+sudoers_add_user_not_found: "Usuário não encontrado."
+sudoers_add_self: "Você não pode adicionar a si mesmo (o host já é sudoer)."
+sudoers_add_already_sudoer: "Este usuário já é sudoer."
+sudoers_add_success: "✅ {username} foi adicionado como sudoer."
+sudoers_remove_title: "Escolha um dos usuários abaixo para remover:"
+sudoers_remove_confirm: "Tem certeza que deseja remover @{username} da lista de sudoers?"
+sudoers_remove_success: "✅ {username} foi removido dos sudoers."
+sudoers_remove_self_alert: "Você não pode remover a si mesmo."
+sudoers_only_owner_alert: "Apenas o dono pode gerenciar sudoers."
 
 #upgrade.py
 not_git_repo: "Erro: Você deve estar dentro de um repositório git para atualizá-lo."

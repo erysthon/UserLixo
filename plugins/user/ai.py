@@ -74,7 +74,8 @@ async def gpt(c: Client, m: Message, t):
         gpt._locks[m.chat.id] = chat_lock
     
     async with chat_lock:
-        await m.edit(t("wait"))
+        # CAPTURA A MENSAGEM DE ESPERA
+        wait_msg = await m.edit(t("wait"))
         
         # Recupera ou cria o histórico
         form = []
@@ -137,7 +138,7 @@ async def gpt(c: Client, m: Message, t):
                     if start_msg and start_msg.text:
                         form = [{"role": "user", "content": start_msg.text, "name": m.from_user.first_name}]
                     else:
-                        return await m.edit(t("ai_no_text"))
+                        return await wait_msg.edit(t("ai_no_text"))
             
             # Coleta de contexto: mensagens anteriores em cadeia (reply_to_message)
             start_msg = m.reply_to_message if m.reply_to_message else None
@@ -195,7 +196,7 @@ async def gpt(c: Client, m: Message, t):
         # --------------------------------------------------------
         api_key = await get_ai_key(m.from_user.id)
         if not api_key:
-           return await m.edit(t("ai_no_key_error"))
+           return await wait_msg.edit(t("ai_no_key_error"))
 
         headers = {
             "Authorization": f"Bearer {api_key}",
@@ -281,7 +282,7 @@ async def gpt(c: Client, m: Message, t):
                 )
             
             if response.status_code != 200:
-                return await m.edit(t("ai_api_error").format(error=response.text))
+                return await wait_msg.edit(t("ai_api_error").format(error=response.text))
             
             res = response.json()["choices"][0]["message"]
             
