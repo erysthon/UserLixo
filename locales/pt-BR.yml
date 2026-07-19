@@ -156,6 +156,27 @@ plugins_settings: "Escolha um plugin para configurar:"
 #dicio.py
 choose_options: "Escolha uma das opções:"
 
+#doc.py
+doc_dir_confirm: "📁 O caminho fornecido é um diretório. Deseja enviar todos os arquivos da pasta `{path}`?"
+doc_all_ask_folder: "📁 Envie o caminho da pasta que contém os arquivos:"
+doc_all_timeout: "⏰ Tempo esgotado. Operação cancelada."
+doc_all_folder_not_found: "❌ Pasta `{path}` não encontrada."
+doc_all_folder_read_error: "❌ Erro ao ler o conteúdo da pasta."
+doc_all_folder_found: "📂 Pasta encontrada com **{count}** arquivo(s).\nAgora envie o intervalo (ex: 2m, 1h30m10s):"
+doc_all_no_files: "⚠️ Nenhum arquivo encontrado na pasta."
+doc_all_ask_interval: "⏱️ Envie o intervalo entre os envios (mínimo 3s):"
+doc_all_invalid_interval: "⚠️ Intervalo inválido. Use um valor como 30s, 2m, 1h e no mínimo {min} segundos."
+doc_all_ask_reply: "💬 Deseja que os documentos sejam enviados respondendo à mensagem original?"
+doc_all_ask_delete: "🗑️ Excluir a pasta após o envio de todos os arquivos?"
+doc_all_err_format: "Erro no formato do callback."
+doc_all_err_state: "Estado da operação não encontrado."
+doc_err_send: "Erro ao enviar {file}: {error}"
+doc_progress: "📤 Enviando arquivo {current}/{total} ({percent:.1f}%)\n⏳ Tempo restante: {remaining}"
+doc_finished: "✅ Todos os arquivos foram enviados."
+doc_folder_deleted: "🗑️ Pasta `{folder}` excluída."
+doc_delete_error: "⚠️ Erro ao excluir pasta: {error}"
+doc_starting: "Iniciando envio dos arquivos..."
+
 #execs.py
 exec_seucess: Executado com sucesso.
 

@@ -60,17 +60,6 @@ async def on(c: Client, m: Message, t):
         await m.edit(frase)
 
 
-@Client.on_message(filters.command("doc", prefixes=".") & filters.sudoers)
-@use_lang()
-async def doc(c: Client, m: Message, t):
-    file = m.text.split(" ", 1)[1]
-    if not Path(file).exists():
-        await m.edit(t("no_file"))
-        return
-    else:
-        await m.reply_document(file)
-
-
 @Client.on_message(filters.command("restart", prefixes=".") & filters.sudoers)
 @use_lang()
 async def restart(c: Client, m: Message, t):
