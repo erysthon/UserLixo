@@ -80,10 +80,13 @@ class CookieKey(Model): #ytdl cookie management
 
 class AIApiKey(Model): #ai key management
     id = fields.IntField(pk=True)
-    api_key = fields.CharField(max_length=256)  
+    user_id = fields.IntField()  # dono da chave
+    base_url = fields.CharField(max_length=255, default="https://api.openai.com/v1")
+    api_key = fields.CharField(max_length=256)
+    is_active = fields.BooleanField(default=False)  # chave em uso no momento (por usuário)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
-    
+
     class Meta:
         table = "ai_api_keys"
 

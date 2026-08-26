@@ -194,15 +194,10 @@ async def gpt(c: Client, m: Message, t):
         # --------------------------------------------------------
         # Loop de chamadas de função (comportamento original)
         # --------------------------------------------------------
-        api_key = await get_ai_key(m.from_user.id)
-        if not api_key:
+        user_keys = await get_ai_keys(m.from_user.id)
+        if not user_keys:
            return await wait_msg.edit(t("ai_no_key_error"))
 
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        }
-        
         functions = [
             {
                 "name": "create_ai_art",
@@ -273,16 +268,10 @@ async def gpt(c: Client, m: Message, t):
         
         while iteration < max_iter:
             payload = {"model": "gpt-4o-mini", "messages": form, "functions": functions}
-            async with httpx.AsyncClient() as http_client:
-                response = await http_client.post(
-                    "https://api.openai.com/v1/chat/completions",
-                    json=payload,
-                    headers=headers,
-                    timeout=340,
-                )
-            
-            if response.status_code != 200:
-                return await wait_msg.edit(t("ai_api_error").format(error=response.text))
+            response, error_text = await call_openai_chat(m.from_user.id, payload)
+
+            if response is None:
+                return await wait_msg.edit(t("ai_api_error").format(error=error_text or "?"))
             
             res = response.json()["choices"][0]["message"]
             
@@ -581,32 +570,64 @@ async def get_chat_info(client: Client, msg: Message, t) -> str:
         return info
 
 # ------------------------------------------------------------
-# Gerenciamento de chave API da OpenAI
+# Gerenciamento de chaves API (múltiplas por usuário, com base_url)
 # ------------------------------------------------------------
-async def get_ai_key(user_id: int):
-    from db import AIApiKey
-    key_record = await AIApiKey.get_or_none(id=user_id)
-    return key_record.api_key if key_record else None
+def mask_ai_key(api_key: str) -> str:
+    return api_key[:6] + "****" + api_key[-4:] if len(api_key) > 10 else "****"
 
-async def set_ai_key(user_id: int, api_key: str):
-    from db import AIApiKey
-    key_record = await AIApiKey.get_or_none(id=user_id)
-    if key_record:
-        key_record.api_key = api_key
-        await key_record.save()
-    else:
-        await AIApiKey.create(id=user_id, api_key=api_key)
 
-async def remove_ai_key(user_id: int) -> bool:
+async def get_ai_keys(user_id: int):
+    """Todas as chaves do usuário, a ativa primeiro."""
     from db import AIApiKey
-    key_record = await AIApiKey.get_or_none(id=user_id)
-    if key_record:
-        await key_record.delete()
-        return True
-    return False
+    return await AIApiKey.filter(user_id=user_id).order_by("-is_active", "id")
 
-async def validate_ai_key(api_key: str) -> bool:
-    """Valida a chave da OpenAI fazendo uma requisição de teste."""
+
+async def get_active_ai_key(user_id: int):
+    from db import AIApiKey
+    return await AIApiKey.get_or_none(user_id=user_id, is_active=True)
+
+
+async def add_ai_key(user_id: int, base_url: str, api_key: str):
+    """Adiciona uma nova chave e a torna a ativa (desativando as demais)."""
+    from db import AIApiKey
+    await AIApiKey.filter(user_id=user_id).update(is_active=False)
+    return await AIApiKey.create(
+        user_id=user_id,
+        base_url=base_url.rstrip("/"),
+        api_key=api_key,
+        is_active=True,
+    )
+
+
+async def set_active_ai_key(user_id: int, key_id: int) -> bool:
+    from db import AIApiKey
+    key_record = await AIApiKey.get_or_none(id=key_id, user_id=user_id)
+    if not key_record:
+        return False
+    await AIApiKey.filter(user_id=user_id).update(is_active=False)
+    key_record.is_active = True
+    await key_record.save()
+    return True
+
+
+async def remove_ai_key(user_id: int, key_id: int) -> bool:
+    from db import AIApiKey
+    key_record = await AIApiKey.get_or_none(id=key_id, user_id=user_id)
+    if not key_record:
+        return False
+    was_active = key_record.is_active
+    await key_record.delete()
+    if was_active:
+        # promove a próxima chave cadastrada a ativa, se houver
+        remaining = await AIApiKey.filter(user_id=user_id).order_by("id").first()
+        if remaining:
+            remaining.is_active = True
+            await remaining.save()
+    return True
+
+
+async def validate_ai_key(base_url: str, api_key: str) -> bool:
+    """Valida uma chave fazendo uma requisição de teste em {base_url}/models."""
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
@@ -614,7 +635,7 @@ async def validate_ai_key(api_key: str) -> bool:
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                "https://api.openai.com/v1/models",
+                f"{base_url.rstrip('/')}/models",
                 headers=headers,
                 timeout=10
             )
@@ -622,30 +643,74 @@ async def validate_ai_key(api_key: str) -> bool:
     except Exception:
         return False
 
+
+async def call_openai_chat(user_id: int, payload: dict):
+    """
+    Faz a chamada de chat completions tentando a chave ativa do usuário
+    primeiro e, se ela falhar, as demais chaves cadastradas (nessa ordem).
+    A primeira chave que funcionar é marcada como ativa. Retorna
+    (response, error_text) - `response` é None se todas as chaves falharem,
+    e nesse caso `error_text` traz o erro da última tentativa.
+    """
+    keys = await get_ai_keys(user_id)
+    if not keys:
+        return None, None
+
+    last_error = None
+    for key in keys:
+        headers = {
+            "Authorization": f"Bearer {key.api_key}",
+            "Content-Type": "application/json",
+        }
+        url = f"{key.base_url.rstrip('/')}/chat/completions"
+        try:
+            async with httpx.AsyncClient() as http_client:
+                response = await http_client.post(
+                    url, json=payload, headers=headers, timeout=340
+                )
+        except Exception as e:
+            last_error = str(e)
+            continue
+
+        if response.status_code == 200:
+            if not key.is_active:
+                await set_active_ai_key(user_id, key.id)
+            return response, None
+
+        last_error = response.text
+
+    return None, last_error
+
 # ------------------------------------------------------------
 # Callbacks de configuração da chave AI
 # ------------------------------------------------------------
 @bot.on_callback_query(filters.regex(r"\bconfig_plugin_ai\b"))
 @use_lang()
 async def config_ai(c: Client, cq: CallbackQuery, t):
-    """Menu principal de configuração da chave AI."""
+    """Menu principal de configuração das chaves AI."""
     user_id = cq.from_user.id
-    current_key = await get_ai_key(user_id)
-    
-    if current_key:
+    active_key = await get_active_ai_key(user_id)
+
+    if active_key:
         key_status = t("ai_has_key").format(
-            masked=current_key[:6] + "****" + current_key[-4:] if len(current_key) > 10 else "****"
+            masked=f"{active_key.base_url} — {mask_ai_key(active_key.api_key)}"
         )
     else:
         key_status = t("ai_no_key")
-    
+
     await cq.edit_message_text(
         f"{t('ai_settings_title')}\n\n{key_status}",
         reply_markup=InlineKeyboardMarkup([
             [
                 InlineKeyboardButton(
-                    text=t("ai_set_key"),
+                    text=t("ai_add_key"),
                     callback_data="config_plugin_ai_key"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text=t("ai_select_key"),
+                    callback_data="config_plugin_ai_select"
                 )
             ],
             [
@@ -658,12 +723,79 @@ async def config_ai(c: Client, cq: CallbackQuery, t):
         ])
     )
 
-@bot.on_callback_query(filters.regex(r"config_plugin_ai_key"))
+
+def build_key_list_markup(keys, action: str, t, back_callback: str = "config_plugin_ai"):
+    """Monta os botões de lista de chaves para os menus de seleção/remoção."""
+    buttons = []
+    for key in keys:
+        label = f"{'✅ ' if key.is_active else ''}{key.base_url} — {mask_ai_key(key.api_key)}"
+        buttons.append([InlineKeyboardButton(text=label, callback_data=f"{action}|{key.id}")])
+    buttons.append([InlineKeyboardButton(text=t("back"), callback_data=back_callback)])
+    return InlineKeyboardMarkup(buttons)
+
+@bot.on_callback_query(filters.regex(r"^config_plugin_ai_key$"))
 @use_lang()
 async def config_ai_key(c: Client, cq: CallbackQuery, t):
+    """Fluxo de adicionar chave: pede a URL base e, em seguida, a chave."""
     user_id = cq.from_user.id
 
-    # Tenta editar a mensagem com instruções
+    # Passo 1: pede a URL base da API
+    try:
+        await cq.edit_message_text(
+            t("ai_enter_baseurl_instructions"),
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(text=t("cancel"), callback_data="config_plugin_ai")]
+            ])
+        )
+    except Exception as e:
+        print(t("ai_error_editing_message").format(error=e))
+        return
+
+    try:
+        url_msg = await cq.message.chat.listen(
+            filters.text & filters.user(user_id),
+            timeout=60
+        )
+    except ListenerTimeout:
+        try:
+            await cq.edit_message_text(
+                t("ai_timeout"),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(text=t("back"), callback_data="config_plugin_ai")]
+                ])
+            )
+        except:
+            pass
+        return
+
+    base_url = url_msg.text.strip()
+    await url_msg.delete()
+
+    if base_url.startswith(("/", ".")):
+        try:
+            await cq.edit_message_text(
+                t("canceled"),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(text=t("back"), callback_data="config_plugin_ai")]
+                ])
+            )
+        except:
+            pass
+        return
+
+    if not base_url.startswith(("http://", "https://")):
+        try:
+            await cq.edit_message_text(
+                t("ai_invalid_baseurl"),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(text=t("try_again"), callback_data="config_plugin_ai_key")]
+                ])
+            )
+        except:
+            pass
+        return
+
+    # Passo 2: pede a chave da API
     try:
         await cq.edit_message_text(
             t("ai_enter_key_instructions"),
@@ -671,12 +803,9 @@ async def config_ai_key(c: Client, cq: CallbackQuery, t):
                 [InlineKeyboardButton(text=t("cancel"), callback_data="config_plugin_ai")]
             ])
         )
-    except Exception as e:
-        # Se a mensagem original não existir, apenas encerra
-        print(t("ai_error_editing_message").format(error=e))
-        return
+    except:
+        pass
 
-    # Aguarda a mensagem do usuário
     try:
         key_msg = await cq.message.chat.listen(
             filters.text & filters.user(user_id),
@@ -696,7 +825,6 @@ async def config_ai_key(c: Client, cq: CallbackQuery, t):
 
     new_key = key_msg.text.strip()
 
-    # Cancela se a mensagem começar com / ou . (comandos)
     if new_key.startswith(("/", ".")):
         try:
             await cq.edit_message_text(
@@ -709,13 +837,12 @@ async def config_ai_key(c: Client, cq: CallbackQuery, t):
             pass
         return
 
-    # Mensagem de validação
     try:
         await cq.edit_message_text(t("ai_validating_key"))
     except:
         pass
 
-    is_valid = await validate_ai_key(new_key)
+    is_valid = await validate_ai_key(base_url, new_key)
 
     if not is_valid:
         try:
@@ -730,8 +857,8 @@ async def config_ai_key(c: Client, cq: CallbackQuery, t):
         # Não apaga a mensagem do usuário (para que possa tentar novamente)
         return
 
-    # Chave válida: apaga a mensagem do usuário e salva
-    await set_ai_key(user_id, new_key)
+    # Chave válida: apaga a mensagem do usuário e salva (já como ativa)
+    await add_ai_key(user_id, base_url, new_key)
 
     try:
         await cq.edit_message_text(
@@ -744,18 +871,81 @@ async def config_ai_key(c: Client, cq: CallbackQuery, t):
     except:
         pass
 
-@bot.on_callback_query(filters.regex(r"config_plugin_ai_remove"))
+
+@bot.on_callback_query(filters.regex(r"^config_plugin_ai_select$"))
+@use_lang()
+async def config_ai_select_list(c: Client, cq: CallbackQuery, t):
+    """Lista as chaves cadastradas para o usuário escolher qual ativar."""
+    user_id = cq.from_user.id
+    keys = await get_ai_keys(user_id)
+
+    if not keys:
+        return await cq.edit_message_text(
+            t("ai_key_list_empty"),
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(text=t("back"), callback_data="config_plugin_ai")]
+            ])
+        )
+
+    await cq.edit_message_text(
+        t("ai_select_key_title"),
+        reply_markup=build_key_list_markup(keys, "config_plugin_ai_setactive", t)
+    )
+
+
+@bot.on_callback_query(filters.regex(r"^config_plugin_ai_setactive\|"))
+@use_lang()
+async def config_ai_set_active(c: Client, cq: CallbackQuery, t):
+    user_id = cq.from_user.id
+    try:
+        key_id = int(cq.data.split("|")[1])
+    except (IndexError, ValueError):
+        return await cq.answer(t("ai_key_list_empty"), show_alert=True)
+
+    ok = await set_active_ai_key(user_id, key_id)
+    message = t("ai_key_activated") if ok else t("ai_key_list_empty")
+
+    await cq.edit_message_text(
+        message,
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton(text=t("back"), callback_data="config_plugin_ai")]
+        ])
+    )
+
+
+@bot.on_callback_query(filters.regex(r"^config_plugin_ai_remove$"))
 @use_lang()
 async def config_ai_remove(c: Client, cq: CallbackQuery, t):
-    """Remover chave API da AI."""
+    """Lista as chaves cadastradas para o usuário escolher qual remover."""
     user_id = cq.from_user.id
-    removed = await remove_ai_key(user_id)
-    
-    if removed:
-        message = t("ai_key_removed")
-    else:
-        message = t("ai_no_key_to_remove")
-    
+    keys = await get_ai_keys(user_id)
+
+    if not keys:
+        return await cq.edit_message_text(
+            t("ai_no_key_to_remove"),
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(text=t("back"), callback_data="config_plugin_ai")]
+            ])
+        )
+
+    await cq.edit_message_text(
+        t("ai_remove_key_title"),
+        reply_markup=build_key_list_markup(keys, "config_plugin_ai_delkey", t)
+    )
+
+
+@bot.on_callback_query(filters.regex(r"^config_plugin_ai_delkey\|"))
+@use_lang()
+async def config_ai_remove_confirm(c: Client, cq: CallbackQuery, t):
+    user_id = cq.from_user.id
+    try:
+        key_id = int(cq.data.split("|")[1])
+    except (IndexError, ValueError):
+        return await cq.answer(t("ai_key_list_empty"), show_alert=True)
+
+    removed = await remove_ai_key(user_id, key_id)
+    message = t("ai_key_removed") if removed else t("ai_no_key_to_remove")
+
     await cq.edit_message_text(
         message,
         reply_markup=InlineKeyboardMarkup([
